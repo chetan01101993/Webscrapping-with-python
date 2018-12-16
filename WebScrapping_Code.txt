@@ -1,0 +1,52 @@
+from requests import get
+from bs4 import BeautifulSoup
+import pandas as pd
+
+#Dictionary containing Scrapped Data
+data={'Name of the Company':[],'Contact Name':[],'Designation':[],'Street Address':[],'City':[],'State':[],'Pincode':[],'Email':[],'Phone':[],'Mobile':[],'Website':[]}
+
+url = 'http://www.iato.in/members/lists'
+response = get(url)
+html_soup = BeautifulSoup(response.text, 'html.parser')
+type(html_soup)
+
+table=html_soup.find('tbody')
+rows=table.find_all('tr')
+for row in rows:
+    col=row.find_all('td')
+    links=[col[1].a['href']]
+    print(links)
+    for link in links:
+        hrefresponse = get(link)
+        soup = BeautifulSoup(hrefresponse.text, 'html.parser')
+        divele=soup.find_all('div',class_ = "post-content")
+        try:
+            finaldiv=divele[3]
+            #print(finaldiv)
+            finalp=finaldiv.find_all('p')
+            #print(finalp[1].text[finalp[1].text.index(':')+1:len(finalp[1].text)])
+            #print(finalp)
+            #print(finalp[0].text[finalp[0].text.index(':')+1:len(finalp[0].text)])
+            data['Name of the Company'].append((finalp[0].text[finalp[0].text.index(':')+1:len(finalp[0].text)]).strip())
+            data['Contact Name'].append((finalp[1].text[finalp[1].text.index(':')+1:len(finalp[1].text)]).strip())
+            data['Designation'].append((finalp[2].text[finalp[2].text.index(':')+1:len(finalp[2].text)]).strip())
+            data['Street Address'].append((finalp[3].text[finalp[3].text.index(':')+1:len(finalp[3].text)]).strip())
+            data['City'].append((finalp[4].text[finalp[4].text.index(':')+1:len(finalp[4].text)]).strip())
+            data['State'].append((finalp[5].text[finalp[5].text.index(':')+1:len(finalp[5].text)]).strip())
+            data['Pincode'].append((finalp[6].text[finalp[6].text.index(':')+1:len(finalp[6].text)]).strip())
+            data['Email'].append((finalp[7].text[finalp[7].text.index(':')+1:len(finalp[7].text)]).strip())
+            data['Phone'].append((finalp[8].text[finalp[8].text.index(':')+1:len(finalp[8].text)]).strip())
+            data['Mobile'].append((finalp[9].text[finalp[9].text.index(':')+1:len(finalp[9].text)]).strip())
+            data['Website'].append((finalp[11].text[finalp[11].text.index(':')+1:len(finalp[11].text)]).strip())
+        except IndexError:
+            continue
+
+
+#creating DataFrame			
+from collections import OrderedDict
+df=pd.DataFrame.from_dict(OrderedDict(data))
+
+#Writing Output to Excel
+writer = pd.ExcelWriter('E:\CompanyDetails.xlsx')
+df.to_excel(writer,'Sheet1')
+writer.save()
